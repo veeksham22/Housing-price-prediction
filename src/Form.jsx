@@ -1,12 +1,56 @@
 import React, { useState } from "react";
 
+// Asynchronous function to get the predicted price
+async function getPredictedPrice(formData) {
+  const url = "http://127.0.0.1:5000/predict"; // Update the API endpoint
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Predicted Price:", data.price, "Lakhs");
+    return data.price;
+  } catch (error) {
+    console.error("Error fetching predicted price:", error);
+    return "Error fetching price";
+  }
+}
+
 const Form = () => {
+  // State variables for form inputs
+  const [formData, setFormData] = useState({
+    area_type: "",
+    location: "",
+    availability: "",
+    total_sqft: "",
+    bath: "",
+    balcony: "",
+    BHK: "",
+  });
+
   const [price, setPrice] = useState("");
 
-  const calculatePrice = (e) => {
+  // Handle form input changes
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Function to calculate the price and update the state
+  const calculatePrice = async (e) => {
     e.preventDefault();
-    // Placeholder logic for price calculation
-    setPrice("Estimated Price: ₹50,00,000");
+    const predictedPrice = await getPredictedPrice(formData);
+    if (predictedPrice) {
+      setPrice(predictedPrice.toFixed(2)); // Limit to 2 decimal places
+    }
   };
 
   return (
@@ -17,77 +61,88 @@ const Form = () => {
         <div className="bg-white bg-opacity-10 backdrop-blur-md p-10 rounded-lg shadow-lg max-w-lg w-full md:w-1/2">
           <h1 className="text-4xl font-bold mb-6 text-center">Price Predictor</h1>
           <form className="space-y-6" onSubmit={calculatePrice}>
-
-            
             {/* Area in Square Feet Input */}
             <input
               type="text"
+              name="total_sqft"
+              value={formData.total_sqft}
+              onChange={handleChange}
               placeholder="Area in square feet"
               className="w-full px-4 py-3 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+              required
             />
 
             {/* Type of Area Dropdown */}
             <select
+              name="area_type"
+              value={formData.area_type}
+              onChange={handleChange}
               className="w-full px-4 py-3 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+              required
             >
               <option value="">Select Type of Area</option>
-              <option value="Carpet Area">Carpet Area</option>
-              <option value="Built-up Area">Built-up Area</option>
-              <option value="Plot Area">Plot Area</option>
-              <option value="Super built-up Area">Super built-up Area</option>
+              <option value="Carpet  Area">Carpet Area</option>
+              <option value="Built-up  Area">Built-up Area</option>
+              <option value="Plot  Area">Plot Area</option>
+              <option value="Super built-up  Area">Super built-up Area</option>
             </select>
 
-            {/* Location Dropdown */}
+            {/* Location Input */}
             <input
               type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
               placeholder="Location"
               className="w-full px-4 py-3 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+              required
             />
 
             {/* Availability Dropdown */}
             <select
+              name="availability"
+              value={formData.availability}
+              onChange={handleChange}
               className="w-full px-4 py-3 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+              required
             >
               <option value="">Availability</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
+              <option value="Ready To Move">Ready To Move</option>
+              <option value="Under Construction">Under Construction</option>
             </select>
 
             {/* BHK Selection */}
-            <select
+            <input
+              type="number"
+              name="BHK"
+              value={formData.BHK}
+              onChange={handleChange}
+              placeholder="Number of BHKs"
               className="w-full px-4 py-3 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-            >
-              <option value="">Select BHK</option>
-              {[...Array(50)].map((_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  {i + 1} BHK
-                </option>
-              ))}
-            </select>
+              required
+            />
 
             {/* Bathroom Selection */}
-            <select
+            <input
+              type="number"
+              name="bath"
+              value={formData.bath}
+              onChange={handleChange}
+              placeholder="Number of Bathrooms"
               className="w-full px-4 py-3 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-            >
-              <option value="">Select Bathrooms</option>
-              {[...Array(20)].map((_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  {i + 1}
-                </option>
-              ))}
-            </select>
+              required
+            />
 
             {/* Balcony Selection */}
-            <select
+            <input
+              type="number"
+              name="balcony"
+              value={formData.balcony}
+              onChange={handleChange}
+              placeholder="Number of Balconies"
               className="w-full px-4 py-3 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-            >
-              <option value="">Select Balcony</option>
-              {[...Array(20)].map((_, i) => (
-                <option key={i} value={i}>
-                  {i}
-                </option>
-              ))}
-            </select>
+              required
+            />
 
             {/* Calculate Button */}
             <button
@@ -97,10 +152,12 @@ const Form = () => {
               Calculate Price
             </button>
           </form>
+
           {/* Output Display */}
           {price && (
             <div className="mt-6 text-center bg-white bg-opacity-20 py-4 px-6 rounded-md">
-              {price}
+              <h2 className="text-lg font-semibold">Predicted Price:</h2>
+              <p>{price} Lakhs</p>
             </div>
           )}
         </div>
